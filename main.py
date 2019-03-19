@@ -186,7 +186,7 @@ def load_model(filename, extras = None):
     if len(candidates) > 0:
         candidates = sorted(candidates, key=lambda f:os.stat(f).st_mtime, reverse=True)
         model = torch.load(candidates[0])
-    return None
+    return model
 
 
 ############################################################
