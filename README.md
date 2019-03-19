@@ -59,7 +59,8 @@ There are two questions we must address:
 
 3. Create anaconda environment with python 3.6
 
-```conda create -n coinrun python=3
+```
+conda create -n coinrun python=3
 source activate coinrun
 ```
 
@@ -79,7 +80,8 @@ source activate coinrun
 
 4. Create anaconda environment with python 3.6
 
-```conda create -n coinrun python=3
+```
+conda create -n coinrun python=3
 source activate coinrun
 ```
 
@@ -294,12 +296,13 @@ How can we train a neural network if we must use it to figure out the correct an
 
 Pytorch comes with a number of optimization functions that determine the specifics of how back propagation works. Choose one and set it up in the function below.
 
-Popular choices for optimizer include: SGD, Adam, and RMSprop. We show the RMSprop as an example. You can change this.
+Popular choices for optimizer include: ```SGD```, ```Adam```, and ```RMSprop```. 
 
 ```
 def initializeOptimizer(parameters):
+    optimizer = None
     ### WRITE YOUR CODE BELOW HERE
-    optimizer = optim.RMSprop(parameters)
+    
     ### WRITE YOUR CODE ABOVE HERE
     return optimizer
 ```
@@ -534,7 +537,7 @@ If you are training on Colab or on a machine with a GPU but no screen, you may w
 
 ## Notes on Debugging
 
-**pdb***
+**pdb**
 
 pdb is a python debuggin tool that runs from the command line or Colab notebooks. Use ```pdb.set_trace()``` to create a break-point with a prompt. Print variables and inspect their values to get a sense of what is going on.
 
@@ -567,7 +570,13 @@ To run the unit-tests from the command line:
 
 To run the unit_tests in Colab, look for the cell that calls ```unit_test()```.
 
+**How to interpret training and testing results**
 
+A duration of greater 1000 or more means that the agent was unable to reach the coin. A duration of greater than 100 means the agent relies a lot on randomness and luck. A well-trained agent should be able to reach the coin in under 40 steps and probably clsoer to 20.
+
+You will see the agent's duration fluctuate a lot from episode to episode. Early on this is because ε is high and the agent is very random. The performance of the agent during training doesn't have a lot of predictive power about how the agent will perform during the next evaluation because ε is set very low (0.1 or less).
+
+We do not set ε=0 for testing, which allows for a small amount of randomness during testing. Without randomness, the agent's model would need to be very close to perfect or it will fail to reach the coin. For example, the agent may have learned to crouch or have failed to learn to jump up a ledge, in which case it agent will get stuck. A small amount of randomness means that the agent will occasionally make a move that may get it unstuck by transitioning the agent into a state in which it does know the right thing to do. If the agent relies too much on the randomness to make progress, we will see high durations. If the agent's policy is good the agent will make faster, and more steady progress resulting in lower durations even with some randomness.
 
 
 ## Grading
@@ -575,4 +584,4 @@ To run the unit_tests in Colab, look for the cell that calls ```unit_test()```.
 * 2 point: pass unit tests
 * 6 points: Train a network that can beat the easy level in less than 40 duration (averaged over 10 runs)
 * 1 point: Train a network that can beat the easy monster level in less than X duration (averaged over 10 runs)
-* 1 point: Train a network that can beat the  medium level in less than Y duration (averaged over 10 runs)
+* 1 point: Train a network that can beat the medium level in less than Y duration (averaged over 10 runs)

@@ -448,8 +448,9 @@ def unit_test():
 ### Output:
 ### - the optimizer object
 def initializeOptimizer(parameters):
+    optimizer = None
     ### WRITE YOUR CODE BELOW HERE
-    optimizer = optim.RMSprop(parameters)
+
     ### WRITE YOUR CODE ABOVE HERE
     return optimizer
 
@@ -714,7 +715,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                     state = next_state
 
                     # If we are past bootstrapping we should perform one step of the optimization
-                    if steps_done > bootstrap_threshold:
+                    if optimizer is not None and steps_done > bootstrap_threshold:
                       optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma)
                 else:
                     # Do nothing if select_action() is not implemented and returning None
