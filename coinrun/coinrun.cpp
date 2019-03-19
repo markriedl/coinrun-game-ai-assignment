@@ -2008,7 +2008,7 @@ void vec_wait(
     rew[e] = a.reward;
     done[e] = a.game_over;
     a.reward = 0;
-    //a.reward = a.x - MAZE_OFFSET; // Mark rewards the agent for increasing it's x coordinate.
+    a.reward = a.x - MAZE_OFFSET; // Mark rewards the agent for increasing it's x coordinate.
     a.game_over = false;
   }
 }
