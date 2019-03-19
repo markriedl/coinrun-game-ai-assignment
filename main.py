@@ -174,7 +174,9 @@ def get_screen(env):
 def save_model(model, filename, extras = None):
     if extras is not None:
         filename = filename + '.' + str(extras)
+    print("Saving", filename, "...")
     torch.save(policy_net, os.path.join(MODEL_PATH, filename))
+    print("Done saving.")
  
 ### Load the model. If there are multiple versions with extra information at the
 ### end of the filename, get the latest.
@@ -185,7 +187,10 @@ def load_model(filename, extras = None):
     candidates = [os.path.join(MODEL_PATH, f) for f in os.listdir(MODEL_PATH) if filename in f]
     if len(candidates) > 0:
         candidates = sorted(candidates, key=lambda f:os.stat(f).st_mtime, reverse=True)
-        model = torch.load(candidates[0])
+        filename = candidates[0]
+        print("Loading", filename, "...")
+        model = torch.load(filename)
+        print("Done loading.")
     return model
 
 
@@ -631,10 +636,8 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
     # Are we resuming from an existing model?
     policy_net = None
     if load_filename is not None and os.path.isfile(os.path.join(MODEL_PATH, load_filename)):
-        print("Loading model...")
         policy_net = load_model(load_filename)
         policy_net = policy_net.to(DEVICE)
-        print("Done loading.")
     else:
         print("Making new model.")
         policy_net = DQN(screen_height, screen_width, env.NUM_ACTIONS).to(DEVICE)
@@ -748,12 +751,10 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                 window_average = sum(eval_window) / len(eval_window)
                 print("evaluation window:", eval_window, "window average:", window_average)
                 # If this is the best window average we've seen, save the model
-                if len(eval_window) >= EVAL_WINDOW_SIZE and window_average < best_window:
+                if len(eval_window) >= EVAL_WINDOW_SIZE and window_average <= best_window:
                     best_window = window_average
                     if save_filename is not None:
-                        print("Saving model...")
                         save_model(policy_net, save_filename, i_episode)
-                        print("Done saving.")
             # Only increment episode number if we are done with bootstrapping
             if steps_done > bootstrap_threshold:
               i_episode = i_episode + 1
