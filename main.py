@@ -114,7 +114,7 @@ RESIZE_CONST = 40
 RENDER_SCREEN = args.render if not IN_PYNB else False
 SAVE_FILENAME = args.save if not IN_PYNB else 'saved.model'
 LOAD_FILENAME = args.load if not IN_PYNB else 'saved.model'
-MODEL_PATH = args.path if not IN_PYNB else 'saved_models' 
+MODEL_PATH = args.model_path if not IN_PYNB else 'saved_models' 
 
 # Don't play with this
 EVAL_EPSILON = 0.1
