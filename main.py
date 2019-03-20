@@ -184,7 +184,7 @@ def save_model(model, filename, extras = None):
     if extras is not None:
         filename = filename + '.' + str(extras)
     print("Saving", filename, "...")
-    torch.save(policy_net, os.path.join(MODEL_PATH, filename))
+    torch.save(model, os.path.join(MODEL_PATH, filename))
     print("Done saving.")
  
 ### Load the model. If there are multiple versions with extra information at the

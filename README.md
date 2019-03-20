@@ -582,6 +582,8 @@ We do not set ε=0 for testing, which allows for a small amount of randomness du
 ## Grading
 
 * 2 point: pass unit tests
-* 6 points: Train a network that can beat the easy level in less than 40 duration (averaged over 10 runs)
-* 1 point: Train a network that can beat the easy monster level in less than X duration (averaged over 10 runs)
-* 1 point: Train a network that can beat the medium level in less than Y duration (averaged over 10 runs)
+* 4 points: Train a network that can beat the easy level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the easy level in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the easy level in less than 50 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the easy monster level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the medium level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
