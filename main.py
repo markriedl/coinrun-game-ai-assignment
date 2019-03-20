@@ -193,6 +193,21 @@ def load_model(filename, extras = None):
         print("Done loading.")
     return model
 
+### Give a text description of the outcome of an episode and also a score
+### Score is duration, unless the agent died.
+def episode_status(duration, reward):
+    status = ""
+    score = 0
+    if duration >= 1000:
+        status = "timeout"
+        score = duration
+    elif reward < 100:
+        status = "died"
+        score = 1000
+    else:
+        status = "coin"
+        score = duration
+    return status, score
 
 ############################################################
 ### ReplayMemory
@@ -637,8 +652,10 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
     # Are we resuming from an existing model?
     policy_net = None
     if load_filename is not None and os.path.isfile(os.path.join(MODEL_PATH, load_filename)):
+        print("Loading model...")
         policy_net = load_model(load_filename)
         policy_net = policy_net.to(DEVICE)
+        print("Done loading.")
     else:
         print("Making new model.")
         policy_net = DQN(screen_height, screen_width, env.NUM_ACTIONS).to(DEVICE)
@@ -715,7 +732,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                     state = next_state
 
                     # If we are past bootstrapping we should perform one step of the optimization
-                    if optimizer is not None and steps_done > bootstrap_threshold:
+                    if steps_done > bootstrap_threshold:
                       optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma)
                 else:
                     # Do nothing if select_action() is not implemented and returning None
@@ -725,6 +742,8 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                 if done:
                     print("duration:", episode_steps)
                     print("max reward:", max_reward)
+                    status, _ = episode_status(episode_steps, max_reward)
+                    print("result:", status)
                     print("total steps:", steps_done)
                     
             # Should we evaluate?
@@ -737,6 +756,8 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                 for _ in range(EVAL_COUNT):
                     # Call the evaluation function
                     test_duration, test_max_reward = evaluate(eval_net, eval_epsilon, env)
+                    status, score = episode_status(test_duration, test_max_reward)
+                    test_duration = score # Set test_duration to score to factor in death-penalty
                     test_average_duration = test_average_duration + test_duration
                     test_average_max_reward = test_average_max_reward + test_max_reward
                 test_average_duration = test_average_duration / 10
@@ -766,6 +787,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
         env.render()
     env.close()
     return policy_net
+ 
  
 
 ### Evaluate the DQN
@@ -821,6 +843,8 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None):
 
     print("duration:", steps_done)
     print("max reward:", max_reward)
+    status, _ = episode_status(steps_done, max_reward)
+    print("result:", status)
     if RENDER_SCREEN and not IN_PYNB:
         env.render()
     return steps_done, max_reward
