@@ -45,6 +45,17 @@ import argparse
 import pdb
 
 ###########################################################
+
+# Seed information
+NUM_LEVELS = 1 # repeat the same level over and over
+EASY_LEVEL = 1 # Start on a very small map, no enemies
+EASY_LEVEL2 = 5
+MEDIUM_LEVEL = 15
+ONE_MONSTER = 10 # Short map with one monster
+HARD_LEVEL = 7 # Longer and with monsters
+LAVA_LEVEL = 3 # Longer and with lava and pits
+
+###########################################################
 '''
 Colab instructions:
 New notebook
@@ -95,6 +106,8 @@ parser.add_argument("--save", help="save the model", default="saved.model")
 parser.add_argument("--load", help="load a model", default=None)
 parser.add_argument("--episodes", help="number of episodes", type=int, default=1000)
 parser.add_argument("--model_path", help="path to saved models", default="saved_models")
+parser.add_argument("--seed", help="which level", default=EASY_LEVEL)
+
 args = None
 if not IN_PYNB:
     args = parser.parse_args()
@@ -115,11 +128,15 @@ RENDER_SCREEN = args.render if not IN_PYNB else False
 SAVE_FILENAME = args.save if not IN_PYNB else 'saved.model'
 LOAD_FILENAME = args.load if not IN_PYNB else 'saved.model'
 MODEL_PATH = args.model_path if not IN_PYNB else 'saved_models' 
+SEED = args.seed if not IN_PYNB else EASY_LEVEL
+
 
 # Don't play with this
 EVAL_EPSILON = 0.1
 EVAL_WINDOW_SIZE = 5
 EVAL_COUNT = 10
+TIMEOUT = 1000
+COIN_REWARD = 100
 
 # You may want to change these, but is probably not necessary
 BATCH_SIZE = 128
@@ -130,15 +147,7 @@ EPSILON = 0.9
 EVAL_INTERVAL = 10
 NUM_EPISODES = args.episodes if not IN_PYNB else 1000
 
-# Seed information
-NUM_LEVELS = 1 # repeat the same level over and over
-EASY_LEVEL = 1 # Start on a very small map, no enemies
-EASY_LEVEL2 = 5
-MEDIUM_LEVEL = 15
-ONE_MONSTER = 10 # Short map with one monster
-HARD_LEVEL = 7 # Longer and with monsters
-LAVA_LEVEL = 3 # Longer and with lava and pits
-SEED = EASY_LEVEL
+
 
 
 
@@ -198,12 +207,12 @@ def load_model(filename, extras = None):
 def episode_status(duration, reward):
     status = ""
     score = 0
-    if duration >= 1000:
+    if duration >= TIMEOUT:
         status = "timeout"
         score = duration
-    elif reward < 100:
+    elif reward < COIN_REWARD:
         status = "died"
-        score = 1000
+        score = TIMEOUT
     else:
         status = "coin"
         score = duration
