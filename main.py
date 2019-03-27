@@ -43,11 +43,13 @@ import argparse
 import pdb
 
 # Set the random seed
+'''
 RANDOM_SEED = 7632
 random.seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
 if torch.cuda.is_available():
   torch.cuda.manual_seed_all(RANDOM_SEED)
+'''
 
 ###########################################################
 
@@ -145,14 +147,14 @@ TIMEOUT = 1000
 COIN_REWARD = 100
 
 # You may want to change these, but is probably not necessary
-BATCH_SIZE = 128
-GAMMA = 0.999
-BOOTSTRAP = 10000
-TARGET_UPDATE = 1
-REPLAY_CAPACITY = 10000
-EPSILON = 0.9
-EVAL_INTERVAL = 10
-NUM_EPISODES = args.episodes if not IN_PYNB else 1000
+BATCH_SIZE = 128            # How many replay experiences to run through neural net at once
+GAMMA = 0.999               # How much to discount the future [0..1]
+BOOTSTRAP = 10000           # How many steps to run to fill up replay memory before training starts
+TARGET_UPDATE = 0           # Delays updating the network for loss calculations. 0=don't delay, or 1+ number of episodes
+REPLAY_CAPACITY = 10000     # How big is the replay memory
+EPSILON = 0.9               # Use random action if less than epsilon [0..1]
+EVAL_INTERVAL = 10          # How many episodes of training before evaluation
+NUM_EPISODES = args.episodes if not IN_PYNB else 1000   # Max number of training episodes
 
 
 
@@ -761,8 +763,6 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
 
                 # Record if this was the best reward we've seen so far
                 max_reward = max(reward, max_reward)
-                
-                
 
                 # Turn the reward into a tensor  
                 reward = torch.tensor([reward], device=DEVICE)
@@ -784,7 +784,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
 
                 # If we are past bootstrapping we should perform one step of the optimization
                 if steps_done > bootstrap_threshold:
-                  optimize_model(policy_net, target_net, replay_memory, optimizer, batch_size, gamma)
+                  optimize_model(policy_net, target_net if target_update > 0 else policy_net, replay_memory, optimizer, batch_size, gamma)
             else:
                 # Do nothing if select_action() is not implemented and returning None
                 env.step(np.array([0]))
@@ -798,7 +798,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                 print("total steps:", steps_done)
 
             # Should we update the target network?
-            if i_episode % target_update == 0:
+            if target_update > 0 and i_episode % target_update == 0:
                 target_net.load_state_dict(policy_net.state_dict())
                 
         # Should we evaluate?
@@ -840,6 +840,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
         env.render()
     env.close()
     return policy_net
+ 
  
  
 

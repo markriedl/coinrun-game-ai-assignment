@@ -417,6 +417,18 @@ def doBackprop(loss, parameters):
 
 There is one complication: ReLU activation functions can result in run-away gradients. Make sure that each parameter passed in is between -1 and 1. Hint: gradient data is stored in a tensor's ```.grad``` member. See also ```clamp_()```.
 
+### Other Parameters
+
+There are a number of parameters that you can set that may affect how well your network converges during training:
+
+* ```BATCH_SIZE```: How many replay experiences to run through the neural network at once. Default is 128.
+* ```NUM_EPISODES```: The max number of episodes to train. Default is 1000.
+* ```REPLAY_CAPACITY```: How big is the replay buffer?
+* ```BOOTSTRAP```: The number of steps the agent should run before training starts. This is to collect up replay experiences. Default is 10000.
+* ```GAMMA```: The discount factor [0..1]. Default is 0.999, which means incorporate a lot of future utility into the current state's utility.
+* ```EPSILON```: Probability of using a random action instead of the policy network [0..1]. The default is 0.9. 
+* ```EVAL_INTERVAL```: How many episodes to train before testing the network.
+* ```TARGET_UPDATE```: One way of stabilizing DQN training is to compute the loss using an old version of the neural network. While counter intuitive that we should train against old information, each update of the neural network can radically change the utility calculations making it hard to find a pattern. This parameter indicates how slowly to update the target network (against which loss is computed). A value of 0 means that the agent should never use old network values. A value of 1+ indicates how many episodes of delay in updating the old network. The default is 0.
 
 ### Other Stuff
 
