@@ -148,6 +148,7 @@ COIN_REWARD = 100
 BATCH_SIZE = 128
 GAMMA = 0.999
 BOOTSTRAP = 10000
+TARGET_UPDATE = 1
 REPLAY_CAPACITY = 10000
 EPSILON = 0.9
 EVAL_INTERVAL = 10
@@ -634,7 +635,7 @@ def doBackprop(loss, parameters):
 ### Take a DQN and do one forward-backward pass.
 ### Since this is Q-learning, we will run a forward pass to get Q-values for state-action pairs and then 
 ### give the true value as the Q-values after the Q-update equation.
-def optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma):
+def optimize_model(policy_net, target_net, replay_memory, optimizer, batch_size, gamma):
     if len(replay_memory) < batch_size:
         return
     ### step 1: sample from the replay memory. Get BATCH_SIZE transitions
@@ -655,7 +656,7 @@ def optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma):
     state_action_values = doPredictQValues(policy_net, states_batch, actions_batch)
 
     ### Step 5: Get the utility values of next_states.
-    next_state_values = doPredictNextStateUtilities(policy_net, next_states_batch, non_final_mask, batch_size)
+    next_state_values = doPredictNextStateUtilities(target_net, next_states_batch, non_final_mask, batch_size)
     
     ### Step 6: Compute the expected Q values.
     expected_state_action_values = doComputeExpectedQValues(next_state_values, rewards_batch, gamma)
@@ -681,7 +682,7 @@ def optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma):
 ### Training loop.
 ### Each episode is a game that runs until the agent gets the coin or the game times out.
 ### Train for a given number of episodes.
-def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = None, eval_interval = EVAL_INTERVAL, replay_capacity = REPLAY_CAPACITY, bootstrap_threshold = BOOTSTRAP, epsilon = EPSILON, eval_epsilon = EVAL_EPSILON, gamma = GAMMA, batch_size = BATCH_SIZE, num_levels = NUM_LEVELS, seed = SEED):
+def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = None, eval_interval = EVAL_INTERVAL, replay_capacity = REPLAY_CAPACITY, bootstrap_threshold = BOOTSTRAP, epsilon = EPSILON, eval_epsilon = EVAL_EPSILON, gamma = GAMMA, batch_size = BATCH_SIZE, target_update = TARGET_UPDATE, num_levels = NUM_LEVELS, seed = SEED):
     # Set up the environment
     setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=num_levels, set_seed=seed)
     env = make('standard', num_envs=1)
@@ -710,6 +711,10 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
     eval_net = DQN(screen_height, screen_width, env.NUM_ACTIONS).to(DEVICE)
     eval_net.load_state_dict(policy_net.state_dict())
     eval_net.eval()
+    # Target network is a snapshot of the policy network that lags behind (for stablity)
+    target_net = DQN(screen_height, screen_width, env.NUM_ACTIONS).to(DEVICE)
+    target_net.load_state_dict(policy_net.state_dict())
+    target_net.eval()
     
     # Instantiate the optimizer
     optimizer = None
@@ -779,7 +784,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
 
                 # If we are past bootstrapping we should perform one step of the optimization
                 if steps_done > bootstrap_threshold:
-                  optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma)
+                  optimize_model(policy_net, target_net, replay_memory, optimizer, batch_size, gamma)
             else:
                 # Do nothing if select_action() is not implemented and returning None
                 env.step(np.array([0]))
@@ -791,6 +796,10 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
                 status, _ = episode_status(episode_steps, max_reward)
                 print("result:", status)
                 print("total steps:", steps_done)
+
+            # Should we update the target network?
+            if i_episode % target_update == 0:
+                target_net.load_state_dict(policy_net.state_dict())
                 
         # Should we evaluate?
         if steps_done > bootstrap_threshold and i_episode > 0 and i_episode % eval_interval == 0:
