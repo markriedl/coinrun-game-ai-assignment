@@ -64,30 +64,40 @@ conda create -n coinrun python=3
 source activate coinrun
 ```
 
-3. Change into the directory you cloned this repo and install remaining requirements
+4. Change into the directory you cloned this repo and install remaining requirements
 
 ```pip install -r requirements.txt```
 
 ### Windows 10
 
-1. Install Windows Subsystem for Linux
-
-2. Clone this repository
+1. Clone this repository
 
 ```git clone https://github.com/markriedl/coinrun-game-ai-assignment.git```
 
+2. Get bash on Windows by installing Windows Subsystem for Linux
+
 3. Download and install Anaconda.
 
-4. Create anaconda environment with python 3.6
+4. Run bash
+
+5. Create conda environment with python 3.6
 
 ```
 conda create -n coinrun python=3
 source activate coinrun
 ```
 
-5. Change into the directory you cloned this repo and install remaining requirements
+6. Change into the directory you cloned this repo and install remaining requirements
 
 ```pip install -r requirements.txt```
+
+
+7. Install Xming
+
+8. Inside bash, set the display
+
+```export DISPLAY=:0```
+
 
 ### Earlier Windows
 
