@@ -819,7 +819,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
             window_average = sum(eval_window) / len(eval_window)
             print("evaluation window:", eval_window, "window average:", window_average)
             # If this is the best window average we've seen, save the model
-            if len(eval_window) >= EVAL_WINDOW_SIZE and window_average <= best_window:
+            if len(eval_window) >= EVAL_WINDOW_SIZE and window_average < best_window:
                 best_window = window_average
                 if save_filename is not None:
                     save_model(policy_net, save_filename, i_episode)
