@@ -7,7 +7,7 @@ from coinrun import setup_utils
 
 
 def main():
-    setup_utils.setup_and_load(paint_vel_info=0)
+    setup_utils.setup_and_load(paint_vel_info=0, use_cmd_line_args=True)
     print("""Control with arrow keys,
 F1, F2 -- switch resolution,
 F5, F6, F7, F8 -- zoom,

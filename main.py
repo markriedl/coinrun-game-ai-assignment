@@ -38,19 +38,25 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-
-
 import os
 import argparse
 import pdb
 
+# Set the random seed
+RANDOM_SEED = 7632
+random.seed(RANDOM_SEED)
+torch.manual_seed(RANDOM_SEED)
+if torch.cuda.is_available():
+  torch.cuda.manual_seed_all(RANDOM_SEED)
+
 ###########################################################
 
-# Seed information
+# Game seed information
 NUM_LEVELS = 1 # repeat the same level over and over
 EASY_LEVEL = 1 # Start on a very small map, no enemies
-EASY_LEVEL2 = 5
-MEDIUM_LEVEL = 15
+EASY_LEVEL2 = 5 # Very small map, no enemies
+MEDIUM_LEVEL = 20 # Medium length, no enemies
+MEDIUM_LEVEL2 = 45 # Medium length, no enemies
 ONE_MONSTER = 10 # Short map with one monster
 HARD_LEVEL = 7 # Longer and with monsters
 LAVA_LEVEL = 3 # Longer and with lava and pits
@@ -133,7 +139,7 @@ SEED = args.seed if not IN_PYNB else EASY_LEVEL
 
 # Don't play with this
 EVAL_EPSILON = 0.1
-EVAL_WINDOW_SIZE = 5
+EVAL_WINDOW_SIZE = 3
 EVAL_COUNT = 10
 TIMEOUT = 1000
 COIN_REWARD = 100
@@ -354,25 +360,57 @@ class UnitTestDQN(nn.Module):
 
 def testSelectAction():
     print("Testing select_action...")
+    from scipy.stats import chisquare
     sample_size = 10000
+    num_tests = 100
+    pass_rate = 0.9
     screen_height = 40
     screen_width = 40
     epsilon = 1.0
     num_actions = 7
+    test_results = {True: 0, False: 0}
+    significance_level = 0.02
     net = UnitTestDQN(screen_height, screen_width, num_actions).to(DEVICE)
     state = torch.randn(1, 3, 80, 80, device=DEVICE)
-    counts = [0] * num_actions
-    for i in range(sample_size):
-        action, new_epsilon = select_action(state, net, num_actions, epsilon, steps_done = 0, bootstrap_threshold = 2)
-        assert(type(action) == torch.Tensor and action.size() == (1,1)), "Action not correct shape."
-        assert(new_epsilon == epsilon), "Epsilon should not change during bootstrapping."
-        action = action.item()
-        counts[action] = counts[action] + 1
-    from scipy.stats import chisquare
-    statistic, pvalue = chisquare(counts)
-    assert(pvalue > 0.1), "Random sample is not from uniform distribution."    
+    for j in range(num_tests):
+        samples = {}
+        for i in range(sample_size):
+            action, new_epsilon = select_action(state, net, num_actions, epsilon, steps_done = 0, bootstrap_threshold = 2)
+            assert(type(action) == torch.Tensor and action.size() == (1,1)), "Action not correct shape."
+            assert(new_epsilon == epsilon), "Epsilon should not change during bootstrapping."
+            action = action.item()
+            if action not in samples:
+                samples[action] = 0
+            samples[action] = samples[action] + 1
+        expected = [sample_size / num_actions] * num_actions
+        statistic, pvalue = chisquare(f_obs=list(samples.values()), f_exp=expected)
+        test_results[pvalue >= significance_level] += 1
+    assert(test_results[True] > pass_rate * num_tests), "Random sample is not from uniform distribution."    
     print("select_action test passed.")
     return True
+
+def chi_test():
+    num_samples = 100000
+    samples = {}
+    state = torch.randn(1, 3, 80, 80, device=DEVICE)
+
+    for i in range(num_samples):
+        action, new_epsilon = select_action(state, net, num_actions, epsilon, steps_done = 0, bootstrap_threshold = 2)
+        s = function_to_test()
+
+        if s not in samples:
+            samples[s] = 0
+
+        samples[s] += 1
+
+    expected = [num_samples / num_directions] * num_directions
+
+    test_result = chisquare(f_obs=list(samples.values()), f_exp=expected)
+
+    significance_level = 0.02
+    return test_result.pvalue >= significance_level
+
+
 
 def testPredictQValues():
     print("Testing doPredictQValues...")
@@ -686,112 +724,109 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
     best_window = float('inf')   # The best average window duration to date
 
     ### Do training until episodes complete or until ^C is pressed
-    try: 
-        print("training...")
-        i_episode = 0            # The episode number
+    print("training...")
+    i_episode = 0            # The episode number
+    
+    # Stop when we reach max episodes
+    while i_episode < num_episodes:
+        print("episode:", i_episode, "epsilon:", epsilon)
+        max_reward = 0       # The best reward we've seen this episode
+        done = False         # Has the game ended (timed out or got the coin)
+        episode_steps = 0    # Number of steps performed in this episode
+        # Initialize the environment and state
+        env.reset()
         
-        # Stop when we reach max episodes
-        while i_episode < num_episodes:
-            print("episode:", i_episode, "epsilon:", epsilon)
-            max_reward = 0       # The best reward we've seen this episode
-            done = False         # Has the game ended (timed out or got the coin)
-            episode_steps = 0    # Number of steps performed in this episode
-            # Initialize the environment and state
-            env.reset()
+        # Current screen. There is no last screen because we get velocity on the screen itself.
+        state = get_screen(env)
+
+        # Do forever until the loop breaks
+        while not done:
+            # Select and perform an action
+            action, epsilon = select_action(state, policy_net, env.NUM_ACTIONS, epsilon, steps_done, bootstrap_threshold)
+            steps_done = steps_done + 1
+            episode_steps = episode_steps + 1
             
-            # Current screen. There is no last screen because we get velocity on the screen itself.
-            state = get_screen(env)
+            # for debugging
+            if RENDER_SCREEN and not IN_PYNB:
+                env.render() 
 
-            # Do forever until the loop breaks
-            while not done:
-                # Select and perform an action
-                action, epsilon = select_action(state, policy_net, env.NUM_ACTIONS, epsilon, steps_done, bootstrap_threshold)
-                steps_done = steps_done + 1
-                episode_steps = episode_steps + 1
+            # Run the action in the environment
+            if action is not None: 
+                _, reward, done, _ = env.step(np.array([action.item()]))
+
+                # Record if this was the best reward we've seen so far
+                max_reward = max(reward, max_reward)
                 
-                # for debugging
-                if RENDER_SCREEN and not IN_PYNB:
-                    env.render() 
+                
 
-                # Run the action in the environment
-                if action is not None: 
-                    _, reward, done, _ = env.step(np.array([action.item()]))
+                # Turn the reward into a tensor  
+                reward = torch.tensor([reward], device=DEVICE)
 
-                    # Record if this was the best reward we've seen so far
-                    max_reward = max(reward, max_reward)
-                    
-                    
+                # Observe new state
+                current_screen = get_screen(env)
 
-                    # Turn the reward into a tensor  
-                    reward = torch.tensor([reward], device=DEVICE)
-
-                    # Observe new state
-                    current_screen = get_screen(env)
-
-                    # Did the game end?
-                    if not done:
-                        next_state = current_screen
-                    else:
-                        next_state = None
-
-                    # Store the transition in memory
-                    replay_memory.push(state, action, next_state, reward)
-
-                    # Move to the next state
-                    state = next_state
-
-                    # If we are past bootstrapping we should perform one step of the optimization
-                    if steps_done > bootstrap_threshold:
-                      optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma)
+                # Did the game end?
+                if not done:
+                    next_state = current_screen
                 else:
-                    # Do nothing if select_action() is not implemented and returning None
-                    env.step(np.array([0]))
-                    
-                # If we are done, print some statistics
-                if done:
-                    print("duration:", episode_steps)
-                    print("max reward:", max_reward)
-                    status, _ = episode_status(episode_steps, max_reward)
-                    print("result:", status)
-                    print("total steps:", steps_done)
-                    
-            # Should we evaluate?
-            if steps_done > bootstrap_threshold and i_episode > 0 and i_episode % eval_interval == 0:
-                test_average_duration = 0       # Track the average eval duration
-                test_average_max_reward = 0     # Track the average max reward
-                # copy all the weights into the evaluation network
-                eval_net.load_state_dict(policy_net.state_dict())
-                # Evaluate 10 times
-                for _ in range(EVAL_COUNT):
-                    # Call the evaluation function
-                    test_duration, test_max_reward = evaluate(eval_net, eval_epsilon, env)
-                    status, score = episode_status(test_duration, test_max_reward)
-                    test_duration = score # Set test_duration to score to factor in death-penalty
-                    test_average_duration = test_average_duration + test_duration
-                    test_average_max_reward = test_average_max_reward + test_max_reward
-                test_average_duration = test_average_duration / 10
-                test_average_max_reward = test_average_max_reward / 10
-                print("Average duration:", test_average_duration)
-                print("Average max reward:", test_average_max_reward)
-                # Append to the evaluation window
-                if len(eval_window) < EVAL_WINDOW_SIZE:
-                    eval_window.append(test_average_duration)
-                else:
-                    eval_window = eval_window[1:] + [test_average_duration]
-                # Compute window average
-                window_average = sum(eval_window) / len(eval_window)
-                print("evaluation window:", eval_window, "window average:", window_average)
-                # If this is the best window average we've seen, save the model
-                if len(eval_window) >= EVAL_WINDOW_SIZE and window_average <= best_window:
-                    best_window = window_average
-                    if save_filename is not None:
-                        save_model(policy_net, save_filename, i_episode)
-            # Only increment episode number if we are done with bootstrapping
-            if steps_done > bootstrap_threshold:
-              i_episode = i_episode + 1
-        print('Training complete')
-    except KeyboardInterrupt:
-        print("Training interrupted")
+                    next_state = None
+
+                # Store the transition in memory
+                replay_memory.push(state, action, next_state, reward)
+
+                # Move to the next state
+                state = next_state
+
+                # If we are past bootstrapping we should perform one step of the optimization
+                if steps_done > bootstrap_threshold:
+                  optimize_model(policy_net, replay_memory, optimizer, batch_size, gamma)
+            else:
+                # Do nothing if select_action() is not implemented and returning None
+                env.step(np.array([0]))
+                
+            # If we are done, print some statistics
+            if done:
+                print("duration:", episode_steps)
+                print("max reward:", max_reward)
+                status, _ = episode_status(episode_steps, max_reward)
+                print("result:", status)
+                print("total steps:", steps_done)
+                
+        # Should we evaluate?
+        if steps_done > bootstrap_threshold and i_episode > 0 and i_episode % eval_interval == 0:
+            test_average_duration = 0       # Track the average eval duration
+            test_average_max_reward = 0     # Track the average max reward
+            # copy all the weights into the evaluation network
+            eval_net.load_state_dict(policy_net.state_dict())
+            # Evaluate 10 times
+            for _ in range(EVAL_COUNT):
+                # Call the evaluation function
+                test_duration, test_max_reward = evaluate(eval_net, eval_epsilon, env)
+                status, score = episode_status(test_duration, test_max_reward)
+                test_duration = score # Set test_duration to score to factor in death-penalty
+                test_average_duration = test_average_duration + test_duration
+                test_average_max_reward = test_average_max_reward + test_max_reward
+            test_average_duration = test_average_duration / 10
+            test_average_max_reward = test_average_max_reward / 10
+            print("Average duration:", test_average_duration)
+            print("Average max reward:", test_average_max_reward)
+            # Append to the evaluation window
+            if len(eval_window) < EVAL_WINDOW_SIZE:
+                eval_window.append(test_average_duration)
+            else:
+                eval_window = eval_window[1:] + [test_average_duration]
+            # Compute window average
+            window_average = sum(eval_window) / len(eval_window)
+            print("evaluation window:", eval_window, "window average:", window_average)
+            # If this is the best window average we've seen, save the model
+            if len(eval_window) >= EVAL_WINDOW_SIZE and window_average <= best_window:
+                best_window = window_average
+                if save_filename is not None:
+                    save_model(policy_net, save_filename, i_episode)
+        # Only increment episode number if we are done with bootstrapping
+        if steps_done > bootstrap_threshold:
+          i_episode = i_episode + 1
+    print('Training complete')
     if RENDER_SCREEN and not IN_PYNB:
         env.render()
     env.close()

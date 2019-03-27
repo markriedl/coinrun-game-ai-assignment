@@ -121,9 +121,11 @@ You will see a bunch of code that is pre-loaded.
 
 3. Turn on GPU support with Edit >> Notebook settings
 
-4. Run the first 8 lines of code by pressing the triangles to the left of each code block.
+4. Run all the cells in the "Installation", "Startup", "Globals", and "Reference" sections of the notebook. To run the code in a cell, pressing the triangle to the left of each code block. If you are asked to restart the runtime, do so.
 
-Instead of editing main.py, you can edit and run the functions directly in the notebook.
+5. Edit the code cells in the "Implementation" section. Run the cells after editing to overwrite previous code.
+
+6. Run the cells under "Unit Testing", "Training", and "Evaluation"
 
 ## Deep Q Network
 
@@ -463,31 +465,39 @@ Here is what you will see when the code starts running:
 
 ```
 Making new model.
+screen size:  40 40
+Making new model.
 training...
 episode: 0 epsilon: 0.9
-duration: 465
-max reward: [100.]
-total steps: 465
-episode: 0 epsilon: 0.9
-duration: 256
-max reward: [100.]
-total steps: 721
-episode: 0 epsilon: 0.9
-duration: 113
-max reward: [100.]
-total steps: 834
-episode: 0 epsilon: 0.9
-duration: 698
-max reward: [100.]
-total steps: 1532
-episode: 0 epsilon: 0.9
-duration: 408
-max reward: [100.]
-total steps: 1940
+duration: 418
+max reward: [107.68955]
+result: coin
+total steps: 418
 episode: 0 epsilon: 0.9
 duration: 1002
-max reward: [0.]
-total steps: 2942
+max reward: [4.9583926]
+result: timeout
+total steps: 1420
+episode: 0 epsilon: 0.9
+duration: 1002
+max reward: [4.432238]
+result: timeout
+total steps: 2422
+episode: 0 epsilon: 0.9
+duration: 1002
+max reward: [3.6338897]
+result: timeout
+total steps: 3424
+episode: 0 epsilon: 0.9
+duration: 1002
+max reward: [6.7347994]
+result: timeout
+total steps: 4426
+episode: 0 epsilon: 0.9
+duration: 949
+max reward: [107.417404]
+result: coin
+total steps: 5375
 ...
 ```
 
@@ -496,30 +506,39 @@ Each episode is printed. An episode is a complete play of the game, concluding e
 Each episode reports:
 * duration: how many actions executed before the game ends.
 * max reward: the greatest amount of reward achieved during the game after any one action.
+* result: coin, timeout, or died
 * total steps: this is the cummulative number of actions performed across *all* episodes/games.
 
 If graphics are being rendered, you will see the agent move very fast during bootstrapping and then slow down after bootstrapping because the neural network is being trained after every frame update.
 
-As a rule of thumb, you will see a duration of > 1000 if the agent never achieves the coin and the game times out. When duration > 1000, you will also see a max reward of 0. A purely random agent will often reach the coin, but when the agent is highly random, the duration times will be 100 or greater. Don't get too excited until you start seeing durations of fewer than 60, with durations of around 20 being close to optimal.
+As a rule of thumb, you will see a duration of > 1000 if the agent never achieves the coin and the game times out. When duration > 1000, you will also see a max reward of less than 100. A purely random agent will often reach the coin, but when the agent is highly random, the duration times will be 100 or greater. Don't get too excited until you start seeing durations of fewer than 60, with durations of around 20 being close to optimal.
+
+In levels with monsters, the agent may die, in which case the duration is set to 1000 because we are trying to minimize duration and we don't want to learn to die.
 
 Every ```EVAL_INTERVAL``` episodes, the current deep Q network will be evaluated. Evaluation means the epsilon is set to a very low exploration probability and the game is run 10 times in a row without any learning. It looks like this:
 
 ```
 Evaluating...
-duration: 164
-max reward: [100.]
+duration: 144
+max reward: [107.99414]
+result: coin
 Evaluating...
-duration: 62
-max reward: [100.]
+duration: 110
+max reward: [107.54319]
+result: coin
+Evaluating...
+duration: 92
+max reward: [107.00101]
+result: coin
 
 ...
 
-Average duration: 53.7
-Average max reward: [100.]
-evaluation window: [53.7 946.3 20.6 128.8 1002.0] window average: 430.28
+Average duration: 49.8
+Average max reward: [107.269455]
+evaluation window: [128.8 1002.0 53.7] window average: 394.83
 ```
 
-During evaluation, we keep a rolling window of the last five evaluation periods. If the average duration of the evaluation window reduces, we save the model to disk. 
+During evaluation, we keep a rolling window of the last three evaluation periods. If the average duration of the evaluation window reduces, we save the model to disk. 
 
 ## Running the Testing Code
 
@@ -534,6 +553,8 @@ From Google Colab:
 Evaluation outputs are as above.
 
 If you are training on Colab or on a machine with a GPU but no screen, you may want to run the evaluation on your personal machine and render the outputs. You can download the model file to your personal machine and run it. However, if the model was trained with a GPU and you want to run the model on a machine without a GPU, you will run into problems. You first need to covert the model from one that runs on a GPU to one that runs only on a CPU. On the machine with the GPU, run ```cuda_to_cpu --infile saved.model --outfile saved_cpu.model```. You can download this new file and run it on a CPU-only machine. (There is a corresponding cell block in Colab.)
+
+Note about working with Colab: Your runtime may disconnect from time to time due to computer inactivity. If the runtime has been disconnected for too long, Google will delete all your files, including the CoinRun game files and any saved models. If this happens you will need to re-run all the cells for installation and setup again.
 
 ## Notes on Debugging
 
@@ -581,9 +602,20 @@ We do not set ε=0 for testing, which allows for a small amount of randomness du
 
 ## Grading
 
-* 2 point: pass unit tests
-* 4 points: Train a network that can beat the easy level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the easy level in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the easy level in less than 50 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the easy monster level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the medium level in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 2 point: Pass unit tests
+* 1 point: Training loop executes 10 episodes and produces a valid model with gradients. 
+* 3 points: Train a network that can beat ```EASY_LEVEL``` in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 50 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the ```ONE_MONSTER``` levellevel in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat ```MEDIUM_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+
+## Submission
+
+Submit a zip file containing 4 files:
+* a pytorch model named easy.model
+* a pytorch model named monster.model
+* a pytorch model names medium.model
+* main.py
+
+If you used Colab, copy your implementation functions into main.py first.
