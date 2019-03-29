@@ -49,6 +49,8 @@ There are two questions we must address:
 
 ## Installation
 
+Installation requires 1.5 GB hard drive space.
+
 ### Mac and Linux
 
 1. Clone this repository
@@ -111,11 +113,11 @@ In the directory you installed the repository, run an agent that takes random ac
 
 If you can render graphics, you can also run:
 
-```python -m coinrun.random_render```
+```python -m coinrun.random_render --hres --set-seed 1 -nlev 1```
 
 and also run the interactive mode:
 
-```python -m coinrun.interactive```
+```python -m coinrun.interactive --set-seed 1 -nlev 1```
 
 You are now ready to edit main.py to fill in your implementation details.
 
@@ -151,7 +153,7 @@ How can this possibly work? How does it know how much activation for each convol
 
 ### Writing your DQN
 
-In pytorch, we create a neural network by creating a class that inherits from Module. There are two things you must do. In the constructor, you must initialize the layers that will make up your network. You do not have to indicate how the layers connect to each other.
+In pytorch, we create a neural network by creating a class that inherits from Module. There are two things you must do. In the constructor, you must initialize the layers that will make up your network. You do not have to indicate how the layers connect to each other in the constructor (this happens later).
 
 Types of layers that you might find valuable:
 
@@ -291,6 +293,7 @@ class ReplayMemory(object):
 The reward function is as follows:
 
 * 100 points for touching a coin.
+* 1 point for for every 1 unit of horizontal space to the right of the starting position (for reference, the easy level is about 8 units long).
 
 There is nothing you need to do here. The game tells the agent how many points it got after every action performed.
 
@@ -454,32 +457,22 @@ def get_screen(env):
 
 ## Running the Training Code
 
-There are some parameters that you can set:
-
-* ```NUM_EPISODES```: How many training episodes. An episode is one game, either timing out or succeding when the coin is touched.
-* ```EVAL_INTERVAL```: How many episodes to run before evaluating the network.
-* ```REPLAY_CAPACITY```: How big is the experience replay ring buffer.
-* ```BATCH_SIZE```: how many experiences can be run in parallel during training
-* ```GAMMA```: How much to discount Q-values
-* ```BOOTSTRAP```: How many screens to collect and put in replay memory before training starts.
-* ```EPSILON```: probability of taking a random action.
-
-```
-NUM_EPISODES = 1000
-EVAL_INTERVAL = 10
-REPLAY_CAPACITY = 10000
-BATCH_SIZE = 128
-GAMMA = 0.999
-BOOTSTRAP = 10000
-EVAL_EPSILON = 0.1
-EPSILON = 0.9
-```
-
-From the command line:
+*From the command line:*
 
 * ```python main.py --render --save saved.model``` or ```python main.py --save saved.model```
 
-From Google Colab:
+The command line arguments for main.py are:
+* --render: render the screen
+* --save filename: save the model to the filename (episode will be appended to the end of the filename)
+* --load filename: load a model. If training, it will continue to train with that model. For evaluation, this is the model that will be evaluated.
+* -- model_path path: the path to where models are saved. If not specified default is "saved-models".
+* -- episodes number: the number of episodes to train.
+* -- eval: run evaluation instead of training
+* -- unit_test: run unit-testing instead of training
+* -- seed number: the game type (default is ```EASY_LEVEL```). ```MEDIUM_LEVEL = 20```, ```ONE_MONSTER = 10```. 
+
+
+*From Google Colab:*
 
 * Run all blocks in order, finishing in the block that calls ```train()```.
 
@@ -628,7 +621,7 @@ We do not set ε=0 for testing, which allows for a small amount of randomness du
 * 3 points: Train a network that can beat ```EASY_LEVEL``` in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 * 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 * 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 50 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the ```ONE_MONSTER``` levellevel in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the ```ONE_MONSTER``` level in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 * 1 point: Train a network that can beat ```MEDIUM_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 
 ## Submission
@@ -640,4 +633,6 @@ Submit a zip file containing 4 files:
 * a pytorch model named monster.model
 * a pytorch model names medium.model
 * main.py
+
+Name your zip file: username_hw8.zip
 
