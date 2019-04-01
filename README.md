@@ -62,7 +62,7 @@ Installation requires 1.5 GB hard drive space.
 3. Create anaconda environment with python 3.6
 
 ```
-conda create -n coinrun python=3
+conda create -n coinrun python=3.6
 source activate coinrun
 ```
 
@@ -113,11 +113,11 @@ In the directory you installed the repository, run an agent that takes random ac
 
 If you can render graphics, you can also run:
 
-```python -m coinrun.random_render --hres --set-seed 1 -nlev 1```
+```python -m coinrun.random_render --hres -set-seed 1 -nlev 1```
 
 and also run the interactive mode:
 
-```python -m coinrun.interactive --set-seed 1 -nlev 1```
+```python -m coinrun.interactive -set-seed 1 -nlev 1```
 
 You are now ready to edit main.py to fill in your implementation details.
 
