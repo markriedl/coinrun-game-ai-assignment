@@ -89,21 +89,23 @@ conda create -n coinrun python=3
 source activate coinrun
 ```
 
-6. Change into the directory you cloned this repo and install remaining requirements
+6. Run ```apt-get install mpich build-essential qt5-default pkg-config```
+
+7. Change into the directory you cloned this repo and install remaining requirements
 
 ```pip install -r requirements.txt```
 
 
-7. Install Xming
+8. Install Xming
 
-8. Inside bash, set the display
+9. Inside bash, set the display
 
 ```export DISPLAY=:0```
 
 
 ### Earlier Windows
 
-Not supported, use Google Colab.
+Not supported, use Google Colab (below).
 
 ### Testing your installation
 
