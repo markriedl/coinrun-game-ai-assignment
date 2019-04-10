@@ -416,7 +416,7 @@ def testPredictQValues():
     num_actions = 7
     net = DQN(screen_height, screen_width, num_actions).to(DEVICE)
     states_batch = torch.randn(batch_size, 3, 80, 80, device=DEVICE)
-    actions_batch = torch.randint(0, 7, (128, 1), device=DEVICE)
+    actions_batch = torch.randint(0, 7, (128, 1), device=DEVICE).long()
     state_action_values = doPredictQValues(net, states_batch, actions_batch)
     assert(type(state_action_values) == torch.Tensor and state_action_values.size() == (128, 1)), "Return value not correct shape."
     print("doPredictQValues test passed.")
