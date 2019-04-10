@@ -334,7 +334,7 @@ def testMakeBatch():
     # Test mask
     test_replay_memory = ReplayMemory(batch_size)
     for i in range(batch_size):
-        state = torch.randn(1, 3, 80, 80)
+        state = torch.randn(1, 3, 80, 80, device=DEVICE)
         new_state = None
         if i % 2 == 0:
             new_state = torch.randn(1, 3, 80, 80, device=DEVICE)
