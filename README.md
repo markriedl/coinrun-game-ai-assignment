@@ -636,5 +636,7 @@ Submit a zip file containing 4 files:
 * a pytorch model names medium.model
 * main.py
 
+Alternatively: if you found you needed different DQN architectures and different training functions and global parameters for each map, you may submit three different versions of ```main.py```, named ```main_easy.py```, ```main_medium.py```, and ```main_monster.py```.
+
 Name your zip file: username_hw8.zip
 
