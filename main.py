@@ -836,8 +836,8 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
 
 ### Evaluate the DQN
 ### If environment is given, use that. Otherwise make a new environment.
-def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None):
-    setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=NUM_LEVELS, set_seed=SEED)
+def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
+    setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=NUM_LEVELS, set_seed=test_seed)
     
     # Make an environment if we don't already have one
     if env is None:
@@ -892,7 +892,6 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None):
     if RENDER_SCREEN and not IN_PYNB:
         env.render()
     return steps_done, max_reward
-
 
 
 if __name__== "__main__":
