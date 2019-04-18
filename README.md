@@ -623,8 +623,9 @@ We do not set ε=0 for testing, which allows for a small amount of randomness du
 * 3 points: Train a network that can beat ```EASY_LEVEL``` in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 * 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 * 1 point: Train a network that can beat ```EASY_LEVEL``` in less than 50 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat the ```ONE_MONSTER``` level in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
-* 1 point: Train a network that can beat ```MEDIUM_LEVEL``` in less than 100 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat ```MEDIUM_LEVEL``` in less than 150 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+* 1 point: Train a network that can beat the ```ONE_MONSTER``` level in less than 300 duration (averaged over 10 runs, with evaluation epsilon 0.1)
+
 
 ## Submission
 
