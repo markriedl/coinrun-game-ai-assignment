@@ -2,7 +2,7 @@ import sys
 import os
 import traceback
 
-SKIP_UNIT_TESTS = True
+SKIP_UNIT_TESTS = False
 SKIP_TRAINING = False
 
 is_easy = False
