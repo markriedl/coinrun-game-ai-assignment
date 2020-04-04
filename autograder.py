@@ -1,3 +1,4 @@
+
 import sys
 import os
 import traceback
@@ -57,7 +58,7 @@ def grade_train(num_episodes = NUM_EPISODES, load_filename = None, save_filename
     # Set up the environment
     setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=num_levels, set_seed=seed)
     env = make('standard', num_envs=1)
-    if RENDER_SCREEN and not NO_DISPLAY:
+    if RENDER_SCREEN and not IN_PYNB:
         env.render()
 
     # Reset the environment
@@ -122,7 +123,7 @@ def grade_train(num_episodes = NUM_EPISODES, load_filename = None, save_filename
             episode_steps = episode_steps + 1
             
             # for debugging
-            if RENDER_SCREEN and not NO_DISPLAY:
+            if RENDER_SCREEN and not IN_PYNB:
                 env.render() 
 
             # Run the action in the environment
@@ -197,7 +198,7 @@ def grade_train(num_episodes = NUM_EPISODES, load_filename = None, save_filename
         if steps_done > bootstrap_threshold:
           i_episode = i_episode + 1
     print('Training complete')
-    if RENDER_SCREEN and not NO_DISPLAY:
+    if RENDER_SCREEN and not IN_PYNB:
         env.render()
     env.close()
     return policy_net
@@ -208,7 +209,7 @@ def grade_evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = S
     # Make an environment if we don't already have one
     if env is None:
         env = make('standard', num_envs=1)
-    if RENDER_SCREEN and not NO_DISPLAY:
+    if RENDER_SCREEN and not IN_PYNB:
         env.render()
 
     # Reset the environment
@@ -235,7 +236,7 @@ def grade_evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = S
         action, _ = select_action(state, policy_net, env.NUM_ACTIONS, epsilon, steps_done=0, bootstrap_threshold=0)
         steps_done = steps_done + 1
 
-        if RENDER_SCREEN and not NO_DISPLAY:
+        if RENDER_SCREEN and not IN_PYNB:
             env.render()
 
         # Execute the action
@@ -255,7 +256,7 @@ def grade_evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = S
     print("max reward:", max_reward)
     status, _ = episode_status(steps_done, max_reward)
     print("result:", status, '\n')
-    if RENDER_SCREEN and not NO_DISPLAY:
+    if RENDER_SCREEN and not IN_PYNB:
         env.render()
     return steps_done, max_reward
 
@@ -616,7 +617,7 @@ if (is_all or is_monster) and os.path.exists('monster.model'):
                 status, score = episode_status(duration, max_reward)
                 total_duration = total_duration + score
             average_duration = total_duration / 10.0
-            if average_duration < 350:
+            if average_duration < 300:
                 monster_grade = monster_grade + 1
             if monster_grade > best_monster_grade:
                 best_monster_grade = monster_grade
@@ -643,3 +644,4 @@ print("#####")
 print("Unit test grade:", unit_test_grade)
 print("Training grade:", training_grade)
 print("Testing grade:" ,test_grade)
+
