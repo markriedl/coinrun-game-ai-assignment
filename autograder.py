@@ -616,7 +616,7 @@ if (is_all or is_monster) and os.path.exists('monster.model'):
                 status, score = episode_status(duration, max_reward)
                 total_duration = total_duration + score
             average_duration = total_duration / 10.0
-            if average_duration < 350:
+            if average_duration < 300:
                 monster_grade = monster_grade + 1
             if monster_grade > best_monster_grade:
                 best_monster_grade = monster_grade
