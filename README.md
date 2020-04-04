@@ -562,6 +562,10 @@ From the command line:
 
 * ```python main.py --render --eval --load saved.model``` or ```python main.py --eval --load saved.model```
 
+Use the following command in the command line to create a gif of episode 5 during evaluation :
+
+* ```python main.py --gif 5```
+
 From Google Colab:
 
 * Run all blocks in order, finishing in the block that calls ```evaluate()```.

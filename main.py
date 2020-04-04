@@ -1,3 +1,4 @@
+
 ############################################################
 
 def in_ipynb():
@@ -10,9 +11,19 @@ def in_ipynb():
   except:
     return False
 
+### FOR AUTOGRADER ###
+
 IN_PYNB = in_ipynb()
+import os
+exitval = os.system('python3 -c "from gym.envs.classic_control import rendering" > /dev/null 2>&1')
+NO_DISPLAY = False
+if exitval!=0:
+  print("#############No Display Found##############")
+  NO_DISPLAY = True
 
 #############################################################
+
+
 
 import gym
 import math
@@ -28,7 +39,7 @@ from PIL import Image
 from coinrun import setup_utils, make
 import coinrun.main_utils as utils
 from coinrun.config import Config
-if not IN_PYNB:
+if not NO_DISPLAY:
     from gym.envs.classic_control import rendering
 from coinrun import policies, wrappers
 
@@ -41,7 +52,6 @@ import torchvision.transforms as T
 import os
 import argparse
 import pdb
-
 
 ###########################################################
 
@@ -107,6 +117,7 @@ parser.add_argument("--load", help="load a model", default=None)
 parser.add_argument("--episodes", help="number of episodes", type=int, default=1000)
 parser.add_argument("--model_path", help="path to saved models", default="saved_models")
 parser.add_argument("--seed", help="which level", default=EASY_LEVEL)
+parser.add_argument("--gif", help="which episode to animate", default=None)
 
 args = None
 if not IN_PYNB:
@@ -167,7 +178,32 @@ resize = T.Compose([T.ToPILImage(),
 
 ### Take the environment and return a tensor containing screen data as a 3D tensor containing (color, height, width) information.
 ### Optional: the screen may be manipulated, for example, it could be cropped
-def get_screen(env):
+
+RUN_NUM = 0
+SCREEN_SAVE = True
+SCREEN_COUNT = 0
+SCREEN_SAVE_PREFIX = 'eval'
+SCREEN_SAVE_POSTFIX = '.jpeg'
+TEMP_DIR = 'cache'
+SCREEN_SAVE_RATIO = 0.5
+
+#Screen is numpy array
+def save_screen(screen):
+  global SCREEN_COUNT
+  screen_array_t = np.transpose(screen, (1, 2, 0))
+  img = Image.fromarray(np.uint8(screen_array_t * 255))
+  width, height = img.size
+  img = img.resize((int(width*SCREEN_SAVE_RATIO), int(height*SCREEN_SAVE_RATIO)), Image.LANCZOS)
+  if not os.path.isdir(TEMP_DIR):
+    os.mkdir(TEMP_DIR)
+  if not os.path.isdir(os.path.join(TEMP_DIR, str(RUN_NUM))):
+    os.mkdir(os.path.join(TEMP_DIR, str(RUN_NUM)))
+  img.save(os.path.join(TEMP_DIR, str(RUN_NUM), SCREEN_SAVE_PREFIX + str(SCREEN_COUNT) + SCREEN_SAVE_POSTFIX), "JPEG")
+  SCREEN_COUNT = SCREEN_COUNT + 1
+
+### Take the environment and return a tensor containing screen data as a 3D tensor containing (color, height, width) information.
+### Optional: the screen may be manipulated, for example, it could be cropped
+def get_screen(env, save = False):
     # Returned screen requested by gym is 512x512x3. Transpose it into torch order (Color, Height, Width).
     screen = env.render(mode='rgb_array').transpose((2, 0, 1))
     _, screen_height, screen_width = screen.shape
@@ -177,6 +213,8 @@ def get_screen(env):
     # Convert to float, rescale, convert to torch tensor
     # (this doesn't require a copy)
     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+    if save:
+      save_screen(screen)
     screen = torch.from_numpy(screen)
     # Resize, and add a batch dimension (BCHW)
     return resize(screen).unsqueeze(0).to(DEVICE)
@@ -245,7 +283,7 @@ class ReplayMemory(object):
     ###    Use the position index to keep track of where to put the next item. 
     def push(self, state, action, next_state, reward):
         ### WRITE YOUR CODE BELOW HERE
-
+        
         ### WRITE YOUR CODE ABOVE HERE
         return None
 
@@ -269,7 +307,7 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.num_actions = num_actions
         ### WRITE YOUR CODE BELOW HERE
-
+        
         ### WRITE YOUR CODE ABOVE HERE
 
     # Called with either one element to determine next action, or a batch
@@ -277,10 +315,9 @@ class DQN(nn.Module):
     def forward(self, x):
         q_values = None
         ### WRITE YOUR CODE BELOW HERE
-
+        
         ### WRITE YOUR CODE ABOVE HERE
         return q_values
-
 ##########################################################
 ### UNIT TESTING
 
@@ -329,7 +366,7 @@ def testMakeBatch():
     assert(type(actions_batch) == torch.Tensor and actions_batch.size() == (batch_size, 1)), "actions batch not correct shape."
     assert(type(next_states_batch) == torch.Tensor and next_states_batch.size() == (batch_size, 3, 80, 80)), "next states batch not correct shape."
     assert(type(rewards_batch) == torch.Tensor and rewards_batch.size() == (batch_size, 1)), "rewards batch not correct shape."
-    assert(type(non_final_mask) == type(torch.tensor(batch_size, dtype=torch.uint8, device=DEVICE)) and non_final_mask.size()[0] == batch_size), "non-final mask not correct shape."
+    assert(type(non_final_mask) == type(torch.tensor(batch_size, dtype=torch.bool, device=DEVICE)) and non_final_mask.size()[0] == batch_size), "non-final mask not correct shape."
 
     # Test mask
     test_replay_memory = ReplayMemory(batch_size)
@@ -433,7 +470,7 @@ def testPredictNextStateUtilities():
     # First option to try is that the batch is full sized.
     try:
         next_states_batch = torch.ones(batch_size, 3, 80, 80, device=DEVICE)
-        non_final_mask = torch.ones(batch_size, dtype=torch.uint8, device=DEVICE)
+        non_final_mask = torch.ones(batch_size, dtype=torch.bool, device=DEVICE)
         for i in range(batch_size):
             if i % 2 == 1:
                 next_states_batch[i].fill_(0)
@@ -451,7 +488,7 @@ def testPredictNextStateUtilities():
         # Next option is that batch is not full sized.
         try:
             next_states_batch = torch.ones(batch_size-1, 3, 80, 80, device=DEVICE)
-            non_final_mask = torch.ones(batch_size, dtype=torch.uint8, device=DEVICE)
+            non_final_mask = torch.ones(batch_size, dtype=torch.bool, device=DEVICE)
             non_final_mask[0] = 0
             next_state_values = doPredictNextStateUtilities(net, next_states_batch, non_final_mask, batch_size)
             assert(type(next_state_values) == torch.Tensor and next_state_values.size()[0] == batch_size), "Return value not correctd shape (attempt 2)."
@@ -529,7 +566,7 @@ def select_action(state, policy_net, num_actions, epsilon, steps_done = 0, boots
     action = None
     new_epsilon = epsilon
     ### WRITE YOUR CODE BELOW HERE
-
+    
     ### WRITE YOUR CODE ABOVE HERE
     return action, new_epsilon
 
@@ -618,7 +655,7 @@ def doComputeLoss(state_action_values, expected_state_action_values):
 ### There is no output
 def doBackprop(loss, parameters):
     ### WRITE YOUR CODE BELOW HERE
-
+    
     ### WRITE YOUR CODE ABOVE HERE
     return None
 
@@ -686,7 +723,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
     # Set up the environment
     setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=num_levels, set_seed=seed)
     env = make('standard', num_envs=1)
-    if RENDER_SCREEN and not IN_PYNB:
+    if RENDER_SCREEN and not NO_DISPLAY:
         env.render()
 
     # Reset the environment
@@ -751,7 +788,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
             episode_steps = episode_steps + 1
             
             # for debugging
-            if RENDER_SCREEN and not IN_PYNB:
+            if RENDER_SCREEN and not NO_DISPLAY:
                 env.render() 
 
             # Run the action in the environment
@@ -818,6 +855,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
             print("Average max reward:", test_average_max_reward)
             # If this is the best window average we've seen, save the model
             if test_average_duration < best_eval:
+                print("##### Save Model #####")
                 best_eval = test_average_duration
                 if save_filename is not None:
                     save_model(policy_net, save_filename, i_episode)
@@ -826,7 +864,7 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
         if steps_done > bootstrap_threshold:
           i_episode = i_episode + 1
     print('Training complete')
-    if RENDER_SCREEN and not IN_PYNB:
+    if RENDER_SCREEN and not NO_DISPLAY:
         env.render()
     env.close()
     return policy_net
@@ -837,12 +875,15 @@ def train(num_episodes = NUM_EPISODES, load_filename = None, save_filename = Non
 ### Evaluate the DQN
 ### If environment is given, use that. Otherwise make a new environment.
 def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
+    global RUN_NUM
+    RUN_NUM = RUN_NUM + 1
     setup_utils.setup_and_load(use_cmd_line_args=False, is_high_res=True, num_levels=NUM_LEVELS, set_seed=test_seed)
     
+
     # Make an environment if we don't already have one
     if env is None:
         env = make('standard', num_envs=1)
-    if RENDER_SCREEN and not IN_PYNB:
+    if RENDER_SCREEN and not NO_DISPLAY:
         env.render()
 
     # Reset the environment
@@ -850,14 +891,14 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
 
     # Get screen size so that we can initialize layers correctly based on shape
     # returned from AI gym. 
-    init_screen = get_screen(env)
+    init_screen = get_screen(env, SCREEN_SAVE)
     _, _, screen_height, screen_width = init_screen.shape
 
     # Get the network ready for evaluation (turns off some things like dropout if used)
     policy_net.eval()
 
     # Current screen. There is no last screen
-    state = get_screen(env)
+    state = get_screen(env, SCREEN_SAVE)
 
     steps_done = 0         # Number of steps executed
     max_reward = 0         # Max reward seen
@@ -869,8 +910,8 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
         action, _ = select_action(state, policy_net, env.NUM_ACTIONS, epsilon, steps_done=0, bootstrap_threshold=0)
         steps_done = steps_done + 1
 
-        if RENDER_SCREEN and not IN_PYNB:
-            env.render()
+        if RENDER_SCREEN and not NO_DISPLAY:
+            env.render()          
 
         # Execute the action
         if action is not None:
@@ -880,7 +921,7 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
             max_reward = max(reward, max_reward)
 
             # Observe new state
-            state = get_screen(env)
+            state = get_screen(env, SCREEN_SAVE)
         else:
             # Do nothing if select_action() is not implemented and returning None
             env.step(np.array([0]))
@@ -893,18 +934,57 @@ def evaluate(policy_net, epsilon = EVAL_EPSILON, env = None, test_seed = SEED):
         env.render()
     return steps_done, max_reward
 
+import PIL
+from PIL import Image
+import shutil
+
+def make_anim(num):
+  dir_name = str(num)
+  files = []
+  images = []
+  for file in os.listdir(os.path.join(TEMP_DIR, dir_name)):
+    files.append(file)
+  sorted_files = sorted(files, key=lambda f:int(f[len(SCREEN_SAVE_PREFIX):-len(SCREEN_SAVE_POSTFIX)]))
+  for file in sorted_files:
+    try:
+      img = Image.open(os.path.join(TEMP_DIR, dir_name, file))
+      images.append(img)
+    except:
+      print(os.path.join(TEMP_DIR, dir_name, file), "did not load.")
+  images[0].save('movie' + str(num) + '.gif', "GIF",
+                      save_all=True,
+                      append_images=images[1:],
+                      duration=1)
+
+def show_movie(num):
+    import matplotlib.pyplot as plt
+    dir_name = str(num)
+    files = []
+    for file in os.listdir(os.path.join(TEMP_DIR, dir_name)):
+        files.append(file)
+    sorted_files = sorted(files, key=lambda f:int(f[len(SCREEN_SAVE_PREFIX):-len(SCREEN_SAVE_POSTFIX)]))
+    for file in sorted_files:
+        img = Image.open(os.path.join(TEMP_DIR, dir_name, file), 'r')
+        plt.imshow(img)
 
 if __name__== "__main__":
-    if not IN_PYNB:
-        if args.unit_test:
-            unit_test()
-        elif args.eval:
-            if args.load is not None and os.path.isfile(os.path.join(MODEL_PATH, args.load)):
-                eval_net = load_model(args.load) 
-                print(eval_net)
-                for _ in range(EVAL_COUNT):
-                    evaluate(eval_net, EVAL_EPSILON)
-        else:
-            policy_net = train()
+
+    if args.unit_test:
+        unit_test()
+    
+    elif args.eval:
+        if args.load is not None and os.path.isfile(os.path.join(MODEL_PATH, args.load)):
+            eval_net = load_model(args.load) 
+            print(eval_net)
             for _ in range(EVAL_COUNT):
-                evaluate(policy_net, EVAL_EPSILON)
+                evaluate(eval_net, EVAL_EPSILON)
+    
+    elif args.gif:
+        make_anim(args.gif)
+
+    else:
+        policy_net = train(save_filename=SAVE_FILENAME)
+        for _ in range(EVAL_COUNT):
+            evaluate(policy_net, EVAL_EPSILON)
+
+    
