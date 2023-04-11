@@ -59,10 +59,10 @@ Installation requires 1.5 GB hard drive space.
 
 2. Download and install Anaconda.
 
-3. Create anaconda environment with python 3.6
+3. Create anaconda environment with python 3.8
 
 ```
-conda create -n coinrun python=3.6
+conda create -n coinrun python=3.8
 source activate coinrun
 ```
 
@@ -82,7 +82,7 @@ source activate coinrun
 
 4. Run bash
 
-5. Create conda environment with python 3.6
+5. Create conda environment with python 3.8
 
 ```
 conda create -n coinrun python=3
