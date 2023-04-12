@@ -642,17 +642,3 @@ We do not set ε=0 for testing, which allows for a small amount of randomness du
 * 1 point: Train a network that can beat the ```ONE_MONSTER``` level in less than 300 duration (averaged over 10 runs, with evaluation epsilon 0.1)
 
 
-## Submission
-
-If you used Colab, copy your implementation functions into main.py first.
-
-Submit a zip file containing 4 files:
-* a pytorch model named easy.model
-* a pytorch model named monster.model
-* a pytorch model names medium.model
-* main.py
-
-Alternatively: if you found you needed different DQN architectures and different training functions and global parameters for each map, you may submit three different versions of ```main.py```, named ```main_easy.py```, ```main_medium.py```, and ```main_monster.py```.
-
-Name your zip file: username_hw8.zip
-
