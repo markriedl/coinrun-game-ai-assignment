@@ -70,6 +70,15 @@ source activate coinrun
 
 ```pip install -r requirements.txt```
 
+You may additionally need to do the following on Mac:
+
+```
+brew install mpich
+brew install qt@5
+```
+
+If you get source not found errors, you may need to change create a symbolic link from `/usr/local/opt/qt` to `/usr/localCellar/qt@5/5.15.8_2/`. 
+
 ### Windows 10
 
 1. Clone this repository
@@ -112,6 +121,8 @@ Not supported, use Google Colab (below).
 In the directory you installed the repository, run an agent that takes random actions:
 
 ```python -m coinrun.random_agent```
+
+If you get an error `make: nothing to do for all` then change into the coinrun subdirectory and run `make clean` followed by `make all`.
 
 If you can render graphics, you can also run:
 
