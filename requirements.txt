@@ -1,5 +1,5 @@
 numpy~=1.19.5
-tensorflow~=2.7
+tensorflow==2.7.1
 torch~=1.8
 torchvision~=0.9.1
 gym~=0.17.1
