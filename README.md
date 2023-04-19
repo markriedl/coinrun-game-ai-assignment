@@ -171,7 +171,7 @@ In pytorch, we create a neural network by creating a class that inherits from Mo
 Types of layers that you might find valuable:
 
 * ```nn.Conv2d```: Creates a 2D convoluational layer.
-* ```nn.BatchNorm2d```: Makes training more stable. See this [explanation](http://mlexplained.com/2018/01/10/an-intuitive-explanation-of-why-batch-normalization-really-works-normalization-in-deep-learning-part-1/).
+* ```nn.BatchNorm2d```: Makes training more stable. See this [explanation](https://towardsdatascience.com/batch-norm-explained-visually-how-it-works-and-why-neural-networks-need-it-b18919692739).
 * ```nn.ReLU```: a rectified linear unit ```y = x if x >= 0 else 0```
 * ```nn.LeakyReLU```: a rectified linear unit that allows a small negative value if the input is less than 0.
 * ```nn.Linear```: map a layer of size ```l_in``` to a layer of size ```l_out```. Typically used in conjunction with activation functions such as ReLU, except for the final layer.
