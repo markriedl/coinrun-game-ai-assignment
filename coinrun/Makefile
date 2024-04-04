@@ -1,4 +1,5 @@
 UNAME := $(shell uname -s)
+ARCH := $(shell uname -m)
 OBJDIRR=.build-release
 OBJDIRD=.build-debug
 
@@ -11,13 +12,25 @@ ifeq ($(UNAME),Linux)
 endif
 
 ifeq ($(UNAME),Darwin)
-  ifneq ("$(wildcard /usr/local/opt/qt5/bin/moc"), "")
-    $(info Mac, assumed python3, homebrew branch)
-    MOC =/usr/local/opt/qt5/bin/moc
-    export PKG_CONFIG_PATH=/usr/local/opt/qt5/lib/pkgconfig
+  # If M1 Mac
+  ifeq ($(ARCH),arm64)
+    ifneq ("$(wildcard /opt/homebrew/opt/qt@5)", "")
+      $(info M1 Mac, assumed python3, homebrew branch)
+      MOC =/opt/homebrew/opt/qt@5/bin/moc
+      export PKG_CONFIG_PATH := /opt/homebrew/opt/qt@5/lib/pkgconfig
+    else
+      $(info M1 Mac, assumed python3, anaconda branch)
+      MOC =moc
+    endif
   else
-    $(info Mac, assumed python3, anaconda branch)
-    MOC =moc
+    ifneq ("$(wildcard /usr/local/opt/qt5/bin/moc"), "")
+      $(info Mac, assumed python3, homebrew branch)
+      MOC =/usr/local/opt/qt5/bin/moc
+      export PKG_CONFIG_PATH=/usr/local/opt/qt5/lib/pkgconfig
+    else
+      $(info Mac, assumed python3, anaconda branch)
+      MOC =moc
+    endif
   endif
   PKG   =pkg-config
   SO=.dylib
