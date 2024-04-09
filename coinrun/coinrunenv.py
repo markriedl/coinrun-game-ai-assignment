@@ -83,7 +83,7 @@ lib.vec_wait.argtypes = [
     npct.ndpointer(dtype=np.uint8, ndim=4),    # normal rgb
     npct.ndpointer(dtype=np.uint8, ndim=4),    # larger rgb for render()
     npct.ndpointer(dtype=np.float32, ndim=1),  # rew
-    npct.ndpointer(dtype=np.bool, ndim=1),     # done
+    npct.ndpointer(dtype=bool, ndim=1),     # done
     ]
 
 already_inited = False
@@ -145,7 +145,7 @@ class CoinRunVecEnv(VecEnv):
         self.VIDEORES    = lib.get_VIDEORES()
 
         self.buf_rew = np.zeros([num_envs], dtype=np.float32)
-        self.buf_done = np.zeros([num_envs], dtype=np.bool)
+        self.buf_done = np.zeros([num_envs], dtype=bool)
         self.buf_rgb   = np.zeros([num_envs, self.RES_H, self.RES_W, 3], dtype=np.uint8)
         self.hires_render = Config.IS_HIGH_RES
         if self.hires_render:

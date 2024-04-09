@@ -159,7 +159,7 @@ class Model(object):
         if Config.SYNC_FROM_ROOT:
             if MPI.COMM_WORLD.Get_rank() == 0:
                 initialize()
-            
+
             global_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="")
             sync_from_root(sess, global_variables) #pylint: disable=E1101
         else:
@@ -200,7 +200,7 @@ class Runner(AbstractEnvRunner):
         mb_actions = np.asarray(mb_actions)
         mb_values = np.asarray(mb_values, dtype=np.float32)
         mb_neglogpacs = np.asarray(mb_neglogpacs, dtype=np.float32)
-        mb_dones = np.asarray(mb_dones, dtype=np.bool)
+        mb_dones = np.asarray(mb_dones, dtype=bool)
         last_values = self.model.value(self.obs, self.states, self.dones)
 
         # discount/bootstrap off value fn
@@ -256,7 +256,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
     ob_space = env.observation_space
     ac_space = env.action_space
     nbatch = nenvs * nsteps
-    
+
     nbatch_train = nbatch // nminibatches
 
     model = Model(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
@@ -353,7 +353,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             step = update*nbatch
             rew_mean_10 = utils.process_ep_buf(active_ep_buf, tb_writer=tb_writer, suffix='', step=step)
             ep_len_mean = np.nanmean([epinfo['l'] for epinfo in active_ep_buf])
-            
+
             mpi_print('\n----', update)
 
             mean_rewards.append(rew_mean_10)
