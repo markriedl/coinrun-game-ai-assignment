@@ -1,9 +1,10 @@
-numpy==1.23.5
-tensorflow==2.8.0
-torch~=1.8
-torchvision~=0.12.0
+numpy
+tensorflow
+pillow
+torch
+torchvision
 gym~=0.17.1
-pyglet~=1.5.0
-mpi4py~=3.0
-joblib~=1.1.1
+pyglet
+mpi4py
+joblib
 https://github.com/openai/baselines/archive/7139a66d333b94c2dafc4af35f6a8c7598361df6.zip

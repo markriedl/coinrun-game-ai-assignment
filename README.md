@@ -66,6 +66,15 @@ conda create -n coinrun python=3.8
 source activate coinrun
 ```
 
+If using an M1 Mac, use the following command instead:
+
+```
+conda env create -n coinrun -f coinrun-game-ai-assignment/tf-metal-arm64.yaml
+conda activate coinrun
+```
+
+This will create an environment with the necessary tensorflow dependencies for Apple Silicon.
+
 4. Change into the directory you cloned this repo and install remaining requirements
 
 ```pip install -r requirements.txt```
@@ -73,8 +82,7 @@ source activate coinrun
 You may additionally need to do the following on Mac:
 
 ```
-brew install mpich
-brew install qt@5
+brew install qt@5 open-mpi pkg-config
 ```
 
 If you get source not found errors, you may need to change create a symbolic link from `/usr/local/opt/qt` to `/usr/localCellar/qt@5/5.15.8_2/`. 
